@@ -45,3 +45,13 @@ ZCR (Zero Crossing Rate) | Noisiness, how often the signal changes from positive
 
 4. Use LDA to identify latent topics in the audio features and see if these topics correlate with song popularity.
 
+
+## Code structure
+
++ code
+  + ann
+    + build_train.jl -> buildClassANN, trainClassANN
+    + utils_ann.jl -> oneHotEncoding, classifyOutputs
+  + general
+    + utils_general.jl -> holdOut, calculateMinMaxNormalizationParameters, normalizeMinMax!, accuracy, crossvalidation
+    + train_metrics.jl -> confusionMatrix, printMetrics, printConfusionMatrix
