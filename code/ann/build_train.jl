@@ -138,7 +138,7 @@ function trainClassANN(topology::AbstractArray{<:Int,1},
         push!(testLosses, testLoss);
 
         # Some feedback on the screen
-        println("Epoch ", numEpoch, ": -- Training loss ", trainingLoss, " -- Validation loss:", validationLoss, " -- Test loss ", testLoss);
+        # println("Epoch ", numEpoch, ": -- Training loss ", trainingLoss, " -- Validation loss:", validationLoss, " -- Test loss ", testLoss);
 
 
         opt_state = Flux.setup(Adam(learningRate), ann);
@@ -169,8 +169,8 @@ function trainClassANN(topology::AbstractArray{<:Int,1},
             testAccuracy = accuracy(outputsTest, testTargets);
 
             #  and give some feedback on the screen
-            println("Epoch ", numEpoch, ": -- Training loss ", trainingLoss, " -- Validation loss:", validationLoss, " -- Test loss ", testLoss);
-            println("Epoch ", numEpoch, ": -- Training acc  ", trainingAccuracy, " -- Validation acc: ", validationAccuracy, " -- Test acc  ", testAccuracy);
+            # println("Epoch ", numEpoch, ": -- Training loss ", trainingLoss, " -- Validation loss:", validationLoss, " -- Test loss ", testLoss);
+            # println("Epoch ", numEpoch, ": -- Training acc  ", trainingAccuracy, " -- Validation acc: ", validationAccuracy, " -- Test acc  ", testAccuracy);
 
 
             
