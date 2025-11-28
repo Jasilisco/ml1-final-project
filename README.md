@@ -50,8 +50,13 @@ ZCR (Zero Crossing Rate) | Noisiness, how often the signal changes from positive
 
 + code
   + ann
-    + build_train.jl -> buildClassANN, trainClassANN
+    + build_train.jl -> buildClassANN, trainClassANN, ANNCrossValidation
     + utils_ann.jl -> oneHotEncoding, classifyOutputs
+  + mlj_models
+    + models.jl -> getSVCModel, getDecisionTreeModel, getkNNModel
+    + train_mlj.jl -> mljCrossValidation
   + general
-    + utils_general.jl -> holdOut, calculateMinMaxNormalizationParameters, normalizeMinMax!, accuracy, crossvalidation
+    + utils_general.jl -> holdOut, calculateMinMaxNormalizationParameters, normalizeMinMax!, accuracy, crossvalidation, 
     + train_metrics.jl -> confusionMatrix, printMetrics, printConfusionMatrix
+    + model_factory.jl -> modelCrossValidation
+  
