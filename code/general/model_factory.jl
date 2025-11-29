@@ -212,11 +212,11 @@ function trainClassEnsemble(estimators::AbstractArray{Symbol, 1},
 
         X_train_no_coerce = MLJ.table(input_data[train_indexes, :])
         X_train = coerce(X_train_no_coerce,  autotype(X_train_no_coerce, rules = (:discrete_to_continuous,)))
-        y_train = categorical(output_data[train_indexes])
+        y_train = categorical(output_data[train_indexes, :])
         
         X_test_no_coerce = MLJ.table(input_data[test_indexes, :])
         X_test = coerce(X_test_no_coerce, autotype(X_test_no_coerce, rules = (:discrete_to_continuous,)))
-        y_test = categorical(output_data[test_indexes])
+        y_test = categorical(output_data[test_indexes, :])
 
         # Extract hyperparameters for each estimator
         base_models_NamedTuple = (; (Symbol(estimators[n]) => create_tuned_model(estimators[n], get(modelsHyperParameters, estimators[n], Dict())) for n=1:length(estimators))...)

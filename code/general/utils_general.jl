@@ -1,11 +1,10 @@
 using Random;
 
-
-function holdOut(N::Int, P::Float64)
+function holdOut(N::Int, P::Float64, rng::AbstractRNG=Random.default_rng())
 
     @assert 0 <= P <= 1 "P must be a value between 0 and 1.";
 
-    indexes = randperm(N)
+    indexes = randperm(rng, N)
     testSamples = round(Int, N * P)
 
     testIndexes = indexes[1:testSamples]
@@ -19,14 +18,13 @@ function holdOut(N::Int, P::Float64)
 end
 
 
-
-function holdOut(N::Int, Pval::Float64, Ptest::Float64)
+function holdOut(N::Int, Pval::Float64, Ptest::Float64, rng::AbstractRNG=Random.default_rng())
     
     @assert (Pval + Ptest) < 1.0 "Pval and Ptest sum can't be greater than 1";
 
     validationAndTestPercentage = Pval + Ptest
 
-    (trainIndexes, validationAndTestIndexes) = holdOut(N, validationAndTestPercentage)
+    (trainIndexes, validationAndTestIndexes) = holdOut(N, validationAndTestPercentage, rng)
 
     validationAndTestSamples = length(validationAndTestIndexes)
     
@@ -38,7 +36,7 @@ function holdOut(N::Int, Pval::Float64, Ptest::Float64)
     end
     
 
-    (temporalValidationIndexes, temporalTestIndexes) = holdOut(validationAndTestSamples, 1.0 - relativeValidationPercentage)
+    (temporalValidationIndexes, temporalTestIndexes) = holdOut(validationAndTestSamples, 1.0 - relativeValidationPercentage, rng)
     
     validationIndexes = validationAndTestIndexes[temporalValidationIndexes]
     testIndexes = validationAndTestIndexes[temporalTestIndexes]
@@ -49,7 +47,6 @@ function holdOut(N::Int, Pval::Float64, Ptest::Float64)
 
     return (trainIndexes, validationIndexes, testIndexes)
 end
-
 
 function calculateMinMaxNormalizationParameters(dataset::AbstractArray{<:Real,2})
     return minimum(dataset, dims=1), maximum(dataset, dims=1)
@@ -115,7 +112,7 @@ end;
 
 # CROSS validation
 
-function crossvalidation(N::Int64, k::Int64)
+function crossvalidation(N::Int64, k::Int64, rng::AbstractRNG=Random.default_rng())
 
     vector=collect(1:k)
 
@@ -123,38 +120,37 @@ function crossvalidation(N::Int64, k::Int64)
 
     vector = repeat(vector, number_repetitions)
 
-    return shuffle!(vector[1:N])
+    return shuffle!(rng, vector[1:N])
 end
 
 
-
-function crossvalidation(targets::AbstractArray{Bool, 1}, k::Int64)
+function crossvalidation(targets::AbstractArray{Bool, 1}, k::Int64, rng::AbstractRNG=Random.default_rng())
 
     indices_vector = zeros(Int, size(targets,1))
 
     positive_indexes = findall(t -> t, targets)
     negative_indexes = findall(t -> !t, targets)
 
-    indices_vector[positive_indexes] = crossvalidation(size(positive_indexes,1), k)
-    indices_vector[negative_indexes] = crossvalidation(size(negative_indexes,1), k)
+    indices_vector[positive_indexes] = crossvalidation(size(positive_indexes,1), k, rng)
+    indices_vector[negative_indexes] = crossvalidation(size(negative_indexes,1), k, rng)
 
     return indices_vector;
 
 end
 
-
-function crossvalidation(targets::AbstractArray{Bool,2}, k::Int64)
+function crossvalidation(targets::AbstractArray{Bool,2}, k::Int64, rng::AbstractRNG=Random.default_rng())
 
   indices_vector = zeros(Int, size(targets,1))
 
-  [indices_vector[findall(targets[:,i])] = crossvalidation(sum(targets[:, i]), k) for i in 1:size(targets,2)]
+  [indices_vector[findall(targets[:,i])] = crossvalidation(sum(targets[:, i]), k, rng) for i in 1:size(targets,2)]
 
   return indices_vector
 
 end
 
-function crossvalidation(targets::AbstractArray{<:Any,1}, k::Int64)
-    result =  crossvalidation(oneHotEncoding(targets), k)
+
+function crossvalidation(targets::AbstractArray{<:Any,1}, k::Int64, rng::AbstractRNG=Random.default_rng())
+    result =  crossvalidation(oneHotEncoding(targets), k, rng)
     @assert size(targets) == size(result)
     return result;
   end
