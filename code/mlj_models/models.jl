@@ -12,6 +12,8 @@ SVC = @load ProbabilisticSVC pkg=LIBSVM
 SVMClassifier = MLJ.@load SVC pkg=LIBSVM verbosity=0
 kNNClassifier = MLJ.@load KNNClassifier pkg=NearestNeighborModels verbosity=0
 DTClassifier = MLJ.@load DecisionTreeClassifier pkg=DecisionTree verbosity=0
+DTRegressor = MLJ.@load DecisionTreeRegressor pkg=DecisionTree verbosity=0
+PCA = MLJ.@load PCA pkg=MultivariateStats
 
 
 # modelSVMClassifier = SVMClassifier(kernel=LIBSVM.Kernel.RadialBasis, cost=1.0, gamma=2.0, degree=Int32(3))
@@ -88,15 +90,19 @@ function getSVCProbabilisticModel(modelHyperparameters::Dict)
     end
 end
 
-function getDecisionTreeModel(modelHyperparameters::Dict)
+function getDecisionTreeModelRegressor(modelHyperparameters::Dict)
     max_depth=get(modelHyperparameters, :max_depth, 5)
     rng=get(modelHyperparameters, :rng, Random.MersenneTwister(1))
-    return modelDTClassifier = DTClassifier(max_depth=max_depth, rng=rng)
+    return DTRegressor(max_depth=max_depth, rng=rng)
 end
 
 function getkNNModel(modelHyperparameters::Dict)
     n_neighbors=get(modelHyperparameters, :n_neighbors, 3)
     return kNNClassifier(K=n_neighbors)
+end
+
+function getPCA()
+    return PCA(variance_ratio=0.95)
 end
 
 function getModel(modelType::Symbol, modelHyperparameters::Dict)
@@ -116,8 +122,8 @@ function getModel(modelType::Symbol, modelHyperparameters::Dict)
 
 
     return model
-
-
 end
+
+
 
 
