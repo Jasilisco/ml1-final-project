@@ -28,7 +28,7 @@ function run_approach_experiments(
         Model = Symbol[],
         Config = String[],
         Accuracy = Float64[],
-        F1 = Float64[],
+        ErrorRate = Float64[],
         Sensitivity = Float64[],
         Specificity = Float64[]
     )
@@ -120,9 +120,12 @@ function run_approach_experiments(
                 :ANN,
                 string(config),
                 results[1][1],
-                results[7][1],
+                results[2][1],
                 results[3][1],
-                results[4][1]
+                results[4][1],
+                results[5][1],
+                results[6][1],
+                results[7][1]
             ))
         end
     end
@@ -144,9 +147,12 @@ function run_approach_experiments(
                 :SVM,
                 string(config),
                 results[1][1],
-                results[7][1],
+                results[2][1],
                 results[3][1],
-                results[4][1]
+                results[4][1],
+                results[5][1],
+                results[6][1],
+                results[7][1]
             ))
         end
     end
@@ -192,9 +198,12 @@ function run_approach_experiments(
                 :KNN,
                 string(config),
                 results[1][1],
-                results[7][1],
+                results[2][1],
                 results[3][1],
-                results[4][1]
+                results[4][1],
+                results[5][1],
+                results[6][1],
+                results[7][1]
             ))
         end
     end
@@ -216,9 +225,12 @@ function run_approach_experiments(
                 :RF,
                 string(config),
                 results[1][1],
-                results[7][1],
+                results[2][1],
                 results[3][1],
-                results[4][1]
+                results[4][1],
+                results[5][1],
+                results[6][1],
+                results[7][1]
             ))
         end
     end
@@ -240,9 +252,12 @@ function run_approach_experiments(
                 :AdaBoost,
                 string(config),
                 results[1][1],
-                results[7][1],
+                results[2][1],
                 results[3][1],
-                results[4][1]
+                results[4][1],
+                results[5][1],
+                results[6][1],
+                results[7][1]
             ))
         end
     end
@@ -264,9 +279,12 @@ function run_approach_experiments(
                 :CatBoost,
                 string(config),
                 results[1][1],
-                results[7][1],
+                results[2][1],
                 results[3][1],
-                results[4][1]
+                results[4][1],
+                results[5][1],
+                results[6][1],
+                results[7][1]
             ))
         end
     end
@@ -335,11 +353,14 @@ function run_approach_experiments(
             approach_name,
             :Stack,
             string(Dict(:ensemble => ensemble_config, :models => ensemble_hyperparams)),
-            ensemble_results[1][1],
-            ensemble_results[7][1],
-            ensemble_results[3][1],
-            ensemble_results[4][1]
-        ))
+#         ensemble_results[1][1],
+#         ensemble_results[2][1],
+#         ensemble_results[3][1],
+#         ensemble_results[4][1],
+    #         ensemble_results[5][1],
+    #         ensemble_results[6][1],
+    #         ensemble_results[7][1]
+    #             ))
     else
         println("  Not enough models for ensemble (need at least 2)")
     end

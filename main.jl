@@ -221,7 +221,7 @@ println(best_configs_pca)
 println("=" ^ 80)
 plot_grouped_comparison(results_df_pca; title_str="Best Model Performance (PCA): Accuracy vs F1")
 plot_tradeoff_scatter(results_df_pca; title_str="PCA Approach: Trade-off Analysis")
-save_results_to_csv(results_df, "results/pca.csv")
+save_results_to_csv(results_df_pca, "results/pca.csv")
 
 results_df_lda, best_configs_lda = run_approach_experiments(
     "LDA",
@@ -245,7 +245,7 @@ println(best_configs_lda)
 println("=" ^ 80)
 plot_grouped_comparison(results_df_lda; title_str="Best Model Performance (LDA): Accuracy vs F1")
 plot_tradeoff_scatter(results_df_lda; title_str="LDA Approach: Trade-off Analysis")
-save_results_to_csv(results_df, "results/lda.csv")
+save_results_to_csv(results_df_lda, "results/lda.csv")
 
 
 println("\n" * "=" ^ 80)
