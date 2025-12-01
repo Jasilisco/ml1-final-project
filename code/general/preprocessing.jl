@@ -78,17 +78,17 @@ function load_features(features_file::String; selected_algorithms::Union{Nothing
     rows = [collect(row) for row in header_preview]
     
     if selected_algorithms === nothing
-        selected_indices = 1:length(rows[2])
+        selected_indices = 2:length(rows[2])
     else
         # Find indices where rows[1] is in selected_algorithms
         selected_indices = findall(x -> Symbol(x) in selected_algorithms, rows[1])
     end
     
-        # Convert selected_indices to a vector to ensure proper handling
+    # Convert selected_indices to a vector to ensure proper handling
     selected_indices_vec = collect(selected_indices)
     
     # Select columns: column 1 (track_id) + feature columns
-    selected_cols = [1; selected_indices_vec .+ 1]
+    selected_cols = [1; selected_indices_vec]
     features_df = CSV.read(features_file, DataFrame; header=false, skipto=5, select=selected_cols)
     
     # Create combined column names based on actual columns read
@@ -140,7 +140,7 @@ function getPCAModel(modelHyperparameters::Dict)
 end
 
 function getLDAModel(modelHyperparameters::Dict) 
-    if haskey(modelHyperparameters, :outdim) && !isempty(modelHyperparameters[:variance_ratio])
+    if haskey(modelHyperparameters, :outdim) && !isempty(modelHyperparameters[:outdim])
         outdim = get(modelHyperparameters, :outdim, 2)
         return LDA(outdim=outdim)
     end
@@ -193,7 +193,7 @@ function apply_lda_mlj(data::AbstractArray{<:Real,2}, labels::Vector{String}; ou
     transformed_table = MLJ.transform(lda_mach, data_table)
     
     # Convert back to matrix
-    transformed_data = Matrix(transformed_table)
+    transformed_data = MLJ.matrix(transformed_table)
     
     return transformed_data, lda_mach
 end
@@ -201,6 +201,6 @@ end
 function transform_lda_mlj(lda_mach, data::AbstractArray{<:Real,2})
     data_table = MLJ.table(data)
     transformed_table = MLJ.transform(lda_mach, data_table)
-    return Matrix(transformed_table)
+    return MLJ.matrix(transformed_table)
 end
 
