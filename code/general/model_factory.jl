@@ -201,13 +201,21 @@ function trainClassEnsemble(estimators::AbstractArray{Symbol, 1},
     modelsHyperParameters::Dict,
     ensembleHyperParameters::Dict,     
     trainingDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{<:Any, 1}},    
-    kFoldIndices::Array{Int64,1})
-
+    kFoldIndices::Array{Int64,1},
+    rng::AbstractRNG=MersenneTwister(1234))
+    
+    
     numFolds = maximum(kFoldIndices)
 
     results_vector = Vector{Dict{Symbol, Float64}}(undef, numFolds)
 
     input_data, output_data = trainingDataset
+    targets_str = string.(output_data)
+    classes = unique(targets_str)
+    numClasses = length(classes)
+    
+    # Initialize total confusion matrix (using Float32 to match your DataFrame definition)
+    total_confusion_matrix = zeros(Float32, numClasses, numClasses)
 
     for k in 1:numFolds
 
@@ -225,11 +233,18 @@ function trainClassEnsemble(estimators::AbstractArray{Symbol, 1},
         y_test = categorical(output_data[test_indexes])
 
         # Extract hyperparameters for each estimator
-        base_models_NamedTuple = (; (Symbol(estimators[n]) => create_tuned_model(estimators[n], get(modelsHyperParameters, estimators[n], Dict())) for n=1:length(estimators))...)
+        base_models_NamedTuple = (; (
+            Symbol(estimators[n]) => (
+                estimators[n] == :SVC ?
+                    getSVCProbabilisticModel(get(modelsHyperParameters, estimators[n], Dict())) :
+                    getModel(estimators[n], get(modelsHyperParameters, estimators[n], Dict()))
+            )
+            for n in 1:length(estimators)
+        )...)
 
         model_bagging = Stack(; 
             metalearner = SVC(),
-            resampling = CV(nfolds=5, shuffle=true, rng=123),
+            resampling = CV(nfolds=5, shuffle=true, rng=rng),
             measures = log_loss,
             base_models_NamedTuple... 
         )
@@ -246,6 +261,7 @@ function trainClassEnsemble(estimators::AbstractArray{Symbol, 1},
 
         #Calculate the confusion matrix
         metrics = confusionMatrix(predicted_labels_str, string.(y_test))
+        total_confusion_matrix .+= Float32.(metrics.confusion_matrix)
 
    
         println("metrics for fold $k: $metrics")
@@ -287,6 +303,7 @@ function trainClassEnsemble(estimators::AbstractArray{Symbol, 1},
         aggregated_results[:specificity],
         aggregated_results[:ppv],
         aggregated_results[:npv],
-        aggregated_results[:f1_score]
+        aggregated_results[:f1_score],
+        total_confusion_matrix
     )
 end

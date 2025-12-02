@@ -209,7 +209,6 @@ function extract_features(df)
     # Extract feature columns (exclude track_id and listens)
     feature_cols = [col for col in names(df) if col != "track_listens" && col != "track_id"]
     features_df = select(df, feature_cols)
-    print(feature_cols)
     # Check for and handle non-numeric columns
     # Convert DataFrame to matrix, handling any string columns
     numeric_cols = String[]
