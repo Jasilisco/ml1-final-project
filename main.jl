@@ -98,34 +98,33 @@ println()
 
 # ANN Configurations (at least 8 different architectures, 1-2 hidden layers)
 ann_configs = [
-    Dict(:topology => [10], :learningRate => 0.01, :maxEpochs => 1000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
-    # Dict(:topology => [20], :learningRate => 0.01, :maxEpochs => 1000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
-    # Dict(:topology => [30], :learningRate => 0.01, :maxEpochs => 1000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
-    # Dict(:topology => [50], :learningRate => 0.001, :maxEpochs => 5000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
-    # Dict(:topology => [10, 5], :learningRate => 0.001, :maxEpochs => 5000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
-    # Dict(:topology => [20, 10], :learningRate => 0.001, :maxEpochs => 5000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
-    # Dict(:topology => [30, 15], :learningRate => 0.001, :maxEpochs => 5000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
-    # Dict(:topology => [50, 25], :learningRate => 0.01, :maxEpochs => 5000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
+    Dict(:topology => [10], :learningRate => 0.001, :maxEpochs => 10000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
+    Dict(:topology => [20], :learningRate => 0.001, :maxEpochs => 10000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
+    Dict(:topology => [30], :learningRate => 0.001, :maxEpochs => 10000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
+    Dict(:topology => [50], :learningRate => 0.001, :maxEpochs => 10000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
+    Dict(:topology => [10, 5], :learningRate => 0.001, :maxEpochs => 10000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
+    Dict(:topology => [20, 10], :learningRate => 0.001, :maxEpochs => 10000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
+    Dict(:topology => [30, 15], :learningRate => 0.001, :maxEpochs => 10000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
+    Dict(:topology => [50, 25], :learningRate => 0.001, :maxEpochs => 10000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
 ]
 
 # SVM Configurations (at least 8 different configurations: kernels + C values)
 svm_configs = [
-    
-    # Dict(:kernel => "linear", :cost => 0.1),
-    # Dict(:kernel => "linear", :cost => 1.0),
-    # Dict(:kernel => "rbf", :cost => 0.1, :gamma => 0.01),
-    # Dict(:kernel => "rbf", :cost => 1.0, :gamma => 0.01),
+    Dict(:kernel => "linear", :cost => 0.1),
+    Dict(:kernel => "linear", :cost => 1.0),
+    Dict(:kernel => "linear", :cost => 10.0), # Added
+    Dict(:kernel => "rbf", :cost => 0.1, :gamma => 0.01),
+    Dict(:kernel => "rbf", :cost => 1.0, :gamma => 0.01),
     Dict(:kernel => "rbf", :cost => 10.0, :gamma => 0.1),
-    Dict(:kernel => "poly", :cost => 1.0, :gamma => 0.01, :degree => 2),
-    Dict(:kernel => "poly", :cost => 1.0, :gamma => 0.01, :degree => 3),
+    Dict(:kernel => "rbf", :cost => 100.0, :gamma => 0.01), # Added
     Dict(:kernel => "sigmoid", :cost => 1.0, :gamma => 0.01, :coef0 => 0.0),
 ]
 
 # Decision Tree Configurations (at least 6 different depth values)
 dt_configs = [
-    # Dict(:max_depth => 3, :min_samples_leaf => 5, :rng => rng),
-    # Dict(:max_depth => 5, :min_samples_leaf => 5, :rng => rng),
-    # Dict(:max_depth => 7, :min_samples_leaf => 5, :rng => rng),
+    Dict(:max_depth => 3, :min_samples_leaf => 5, :rng => rng),
+    Dict(:max_depth => 5, :min_samples_leaf => 5, :rng => rng),
+    Dict(:max_depth => 7, :min_samples_leaf => 5, :rng => rng),
     Dict(:max_depth => 10, :min_samples_leaf => 5, :rng => rng),
     Dict(:max_depth => 15, :min_samples_leaf => 5, :rng => rng),
     Dict(:max_depth => 20, :min_samples_leaf => 5, :rng => rng),
@@ -133,30 +132,30 @@ dt_configs = [
 
 # kNN Configurations (at least 6 different k values)
 knn_configs = [
-    # Dict(:n_neighbors => 1),
-    # Dict(:n_neighbors => 3),
-    # Dict(:n_neighbors => 5),
+    Dict(:n_neighbors => 1),
+    Dict(:n_neighbors => 3),
+    Dict(:n_neighbors => 5),
     Dict(:n_neighbors => 7),
     Dict(:n_neighbors => 10),
     Dict(:n_neighbors => 15),
 ]
 rf_configs = [
-    # Dict(:n_trees => 50, :max_depth => 5, :rng => rng),
-    # Dict(:n_trees => 100, :max_depth => 10, :rng => rng),
+    Dict(:n_trees => 50, :max_depth => 5, :rng => rng),
+    Dict(:n_trees => 100, :max_depth => 10, :rng => rng),
     Dict(:n_trees => 200, :max_depth => 15, :rng => rng),
     Dict(:n_trees => 100, :max_depth => -1, :rng => rng),
 ]
 
 adaboost_configs = [
-    # Dict(:n_estimators => 25, :learning_rate => 0.5, :rng => rng),
-    # Dict(:n_estimators => 50, :learning_rate => 1.0, :rng => rng),
+    Dict(:n_estimators => 25, :learning_rate => 0.5, :rng => rng),
+    Dict(:n_estimators => 50, :learning_rate => 1.0, :rng => rng),
     Dict(:n_estimators => 100, :learning_rate => 1.0, :rng => rng),
     Dict(:n_estimators => 50, :learning_rate => 1.5, :rng => rng),
 ]
 
 catboost_configs = [
-    # Dict(:iterations => 50, :learning_rate => 0.1, :depth => 4),
-    # Dict(:iterations => 100, :learning_rate => 0.1, :depth => 6),
+    Dict(:iterations => 50, :learning_rate => 0.1, :depth => 4),
+    Dict(:iterations => 100, :learning_rate => 0.1, :depth => 6),
     Dict(:iterations => 200, :learning_rate => 0.05, :depth => 8),
 ]
 
@@ -174,27 +173,27 @@ configs = Dict(
 # APPROACH 1: Full Features Dataset
 # ============================================================================
 
-# results_df, best_configs = run_approach_experiments(
-#     "Full Features Dataset",
-#     configs,
-#     copy(train_inputs),
-#     copy(train_targets),
-#     copy(test_inputs),
-#     copy(test_targets);
-#     k_folds=3,
-#     rng=rng,
-# )
-# println("\n" * "=" ^ 80)
-# println("SUMMARY - All features")
-# println("=" ^ 80)
-# println(results_df)
-# println("=" ^ 80)
-# println("Best Configurations - All features")
-# println(best_configs)
-# println("=" ^ 80)
-# plot_grouped_comparison(results_df; title_str="Best Model Performance (Full): Accuracy vs F1")
-# plot_tradeoff_scatter(results_df; title_str="Full Features: Trade-off Analysis")
-# save_results_to_csv(results_df, "results/full_dataset.csv")
+results_df, best_configs = run_approach_experiments(
+    "Full Features Dataset",
+    configs,
+    copy(train_inputs),
+    copy(train_targets),
+    copy(test_inputs),
+    copy(test_targets);
+    k_folds=3,
+    rng=rng,
+)
+println("\n" * "=" ^ 80)
+println("SUMMARY - All features")
+println("=" ^ 80)
+println(results_df)
+println("=" ^ 80)
+println("Best Configurations - All features")
+println(best_configs)
+println("=" ^ 80)
+plot_grouped_comparison(results_df; title_str="Best Model Performance (Full): Accuracy vs F1")
+plot_tradeoff_scatter(results_df; title_str="Full Features: Trade-off Analysis")
+save_results_to_csv(results_df, "results/full_dataset.csv")
 
 
 results_df_pca, best_configs_pca = run_approach_experiments(

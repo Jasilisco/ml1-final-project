@@ -20,20 +20,21 @@ function run_approach_experiments(
     test_targets::Vector{String};
     k_folds::Int=5,
     rng::AbstractRNG=MersenneTwister(1234),
-    normalize::Bool=true,
+    normalize::Union{Symbol, Nothing}=:zero,
     preprocessing::Union{Nothing, Dict}=nothing
 )
     results_df = DataFrame(
         Approach = String[],
         Model = Symbol[],
         Config = String[],
-        Accuracy = Float64[],
-        ErrorRate = Float64[],
-        Sensitivity = Float64[],
-        Specificity = Float64[],
-        PPV = Float64[],
-        NPV = Float64[],
-        F1 = Float64[],
+        Accuracy = Float32[],
+        ErrorRate = Float32[],
+        Sensitivity = Float32[],
+        Specificity = Float32[],
+        PPV = Float32[],
+        NPV = Float32[],
+        F1 = Float32[],
+        CM = Matrix{Float32}[]
     )
 
     println("=" ^ 80)
@@ -46,14 +47,19 @@ function run_approach_experiments(
     preprocessing_model = nothing
 
     # Normalize training data
-    if normalize
+    if normalize == :minmax
         norm_params = calculateMinMaxNormalizationParameters(train_inputs_processed)
         normalizeMinMax!(train_inputs_processed)
         
         # Normalize test data using training parameters
         test_inputs_processed = normalizeMinMax(test_inputs_processed, norm_params)
+    elseif normalize == :zero
+        norm_params = calculateZeroMeanNormalizationParameters(train_inputs_processed)
+        normalizeZeroMean!(train_inputs_processed)
+        
+        # Normalize test data using training parameters
+        test_inputs_processed = normalizeZeroMean(test_inputs_processed, norm_params)
     end
-    
     if preprocessing !== nothing
         println("\n--- Applying preprocessing: $(preprocessing[:type]) ---")
         if preprocessing[:type] == :PCA
@@ -128,7 +134,8 @@ function run_approach_experiments(
                 results[4][1],
                 results[5][1],
                 results[6][1],
-                results[7][1]
+                results[7][1],
+                results[8]
             ))
         end
     end
@@ -155,7 +162,8 @@ function run_approach_experiments(
                 results[4][1],
                 results[5][1],
                 results[6][1],
-                results[7][1]
+                results[7][1],
+                results[8]
             ))
         end
     end
@@ -182,7 +190,8 @@ function run_approach_experiments(
                 results[4][1],
                 results[5][1],
                 results[6][1],
-                results[7][1]
+                results[7][1],
+                results[8]
             ))
         end
     end
@@ -209,7 +218,8 @@ function run_approach_experiments(
                 results[4][1],
                 results[5][1],
                 results[6][1],
-                results[7][1]
+                results[7][1],
+                results[8]
             ))
         end
     end
@@ -236,7 +246,8 @@ function run_approach_experiments(
                 results[4][1],
                 results[5][1],
                 results[6][1],
-                results[7][1]
+                results[7][1],
+                results[8]
             ))
         end
     end
@@ -263,7 +274,8 @@ function run_approach_experiments(
                 results[4][1],
                 results[5][1],
                 results[6][1],
-                results[7][1]
+                results[7][1],
+                results[8]
             ))
         end
     end
@@ -290,7 +302,8 @@ function run_approach_experiments(
                 results[4][1],
                 results[5][1],
                 results[6][1],
-                results[7][1]
+                results[7][1],
+                results[8]
             ))
         end
     end

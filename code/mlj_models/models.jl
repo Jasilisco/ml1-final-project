@@ -8,16 +8,16 @@ using Random
 # kNNClassifier = MLJ.@load KNNClassifier pkg=NearestNeighborModels verbosity=0
 # DTClassifier = MLJ.@load DecisionTreeClassifier pkg=DecisionTree verbosity=0
 
-SVC = @load ProbabilisticSVC pkg=LIBSVM
+SVC = @load ProbabilisticSVC pkg=LIBSVM verbosity=0
 SVMClassifier = MLJ.@load SVC pkg=LIBSVM verbosity=0
 kNNClassifier = MLJ.@load KNNClassifier pkg=NearestNeighborModels verbosity=0
 DTClassifier = MLJ.@load DecisionTreeClassifier pkg=DecisionTree verbosity=0
-CatBoostClassifier = @load CatBoostClassifier pkg=CatBoost
+CatBoostClassifier = @load CatBoostClassifier pkg=CatBoost verbosity=0
 RFClassifier = @load RandomForestClassifier pkg=DecisionTree verbosity=0
 AdaBoostClassifier = @load AdaBoostStumpClassifier pkg=DecisionTree verbosity=0
 CatBoostClassifier = @load CatBoostClassifier pkg=CatBoost verbosity=0
 DTRegressor = MLJ.@load DecisionTreeRegressor pkg=DecisionTree verbosity=0
-PCA = MLJ.@load PCA pkg=MultivariateStats
+PCA = MLJ.@load PCA pkg=MultivariateStats verbosity=0
 
 
 # modelSVMClassifier = SVMClassifier(kernel=LIBSVM.Kernel.RadialBasis, cost=1.0, gamma=2.0, degree=Int32(3))

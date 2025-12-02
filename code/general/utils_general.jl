@@ -1,6 +1,52 @@
 using Random;
 include("../mlj_models/models.jl")
 
+function calculateZeroMeanNormalizationParameters(dataset::AbstractArray{<:Real,2})
+    dataset_means = mean(dataset, dims=1)
+    dataset_stds = std(dataset, dims=1)
+
+    return (dataset_means, dataset_stds)
+end
+
+function normalizeZeroMean!(dataset::AbstractArray{<:Real,2},      
+                        normalizationParameters::NTuple{2, AbstractArray{<:Real,2}})
+    (vec_means, vec_stds) = normalizationParameters
+    dataset .-= vec_means
+    dataset ./= vec_stds
+    
+    dataset[:, vec(vec_stds) .== 0.0] .= 0.0
+end
+
+function normalizeZeroMean!(dataset::AbstractArray{<:Real,2})
+    (vec_means, vec_stds) = calculateZeroMeanNormalizationParameters(dataset)
+    dataset .-= vec_means
+    dataset ./= vec_stds
+    
+    dataset[:, vec(vec_stds) .== 0.0] .= 0.0  
+end
+
+function normalizeZeroMean( dataset::AbstractArray{<:Real,2},      
+                            normalizationParameters::NTuple{2, AbstractArray{<:Real,2}})
+    (vec_means, vec_stds) = normalizationParameters
+    
+    dataset_zscore = (dataset .- vec_means) ./ vec_stds
+    
+    dataset_zscore[:, vec(vec_stds) .== 0.0] .= 0.0
+
+    return dataset_zscore
+end
+
+function normalizeZeroMean( dataset::AbstractArray{<:Real,2})
+    normalizationParameters = calculateZeroMeanNormalizationParameters(dataset)
+    
+    (vec_means, vec_stds) = normalizationParameters
+    dataset_zscore = (dataset .- vec_means) ./ vec_stds
+    
+    dataset_zscore[:, vec(vec_stds) .== 0.0] .= 0.0
+
+    return dataset_zscore
+end
+
 function holdOut(N::Int, P::Float64, rng::AbstractRNG=Random.default_rng())
 
     @assert 0 <= P <= 1 "P must be a value between 0 and 1.";
