@@ -6,8 +6,8 @@ using Statistics
 using LinearAlgebra
 using MLJ
 
-PCA = @load PCA pkg=MultivariateStats
-LDA = @load LDA pkg=MultivariateStats
+#PCA = @load PCA pkg=MultivariateStats
+#LDA = @load LDA pkg=MultivariateStats
 
 function load_and_merge_data(tracks_file::String, features_file::String; 
                              selected_tracks_columns::Union{Nothing, Vector{Symbol}} = nothing,

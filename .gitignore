@@ -9,3 +9,5 @@ __pycache__/
 data/
 plots/
 results/
+Exploratory-data-analysis/*.png
+*.zip
