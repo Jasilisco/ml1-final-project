@@ -16,24 +16,52 @@ println("=" ^ 80)
 println("Random seed set to: $RANDOM_SEED for reproducibility")
 println()
 
-# DATA LOADING AND PREPROCESSING
+# ============================================================================
+# DATA LOADING AND PREPROCESSING (CORRECTED)
+# ============================================================================
 
 println("Step 1: Loading and preprocessing data...")
 const TRACKS_FILE = "data/tracks.csv"
 const FEATURES_FILE = "data/features.csv"
 
-# Load and merge data
+# Load data
 df = load_and_merge_data(TRACKS_FILE, FEATURES_FILE; selected_tracks_columns=[:listens])
-reduced_df = load_and_merge_data(TRACKS_FILE, FEATURES_FILE; selected_tracks_columns=[:listens], selected_features_algorithms=[:tonnetz, :chroma_stft])
+reduced_df = load_and_merge_data(TRACKS_FILE, FEATURES_FILE; selected_tracks_columns=[:listens], selected_features_algorithms=[:tonnetz, :mfcc, :spectral, :chroma_cqt, :spectral_bandwith, :zcr])
 
-println("Loaded $(nrow(df)) tracks with $(ncol(df) - 2) features")  # -2 for track_id and listens
-
+# Extract Raw Inputs (Features) and Raw Targets (Listens)
+features_df = extract_features(df)
+reduced_features_df = extract_features(reduced_df)
+print(names(reduced_features_df))
+inputs = Matrix{Float64}(features_df)
+reduced_inputs = Matrix{Float64}(reduced_features_df)
 listens = df.track_listens
 
-# Low (0-33), Medium (34-66), High (67-100)
-p33 = quantile(listens, 0.5)
-p66 = quantile(listens, 0.9)
+println("Input features shape: $(size(inputs))")
+println("REDUCE Input features shape: $(size(reduced_inputs))")
 
+# ============================================================================
+# TRAIN/TEST SPLIT (Perform Split FIRST to avoid Leakage)
+# ============================================================================
+
+println("Step 2: Performing train/test split...")
+const TEST_RATIO = 0.35
+(trainIndexes, testIndexes) = holdOut(size(inputs, 1), TEST_RATIO, rng)
+
+# 1. Split the raw listen counts
+train_listens = listens[trainIndexes]
+test_listens = listens[testIndexes]
+
+# 2. Calculate thresholds on Training Data
+p33 = quantile(train_listens, 0.33)
+p50 = quantile(train_listens, 0.5)
+p66 = quantile(train_listens, 0.66)
+
+println("Class Thresholds (calculated on Train only):")
+println("  Low/Med Boundary (p33): $p33")
+println("  Med Boundary (p50): $p50")
+println("  Med/High Boundary (p66): $p66")
+
+# 3. Define mapping functions using fixed thresholds
 function create_popularity_class(listen_count)
     if listen_count <= p33
         return "Low"
@@ -45,47 +73,23 @@ function create_popularity_class(listen_count)
 end
 
 function binary_popularity_class(listen_count)
-    if listen_count <= p66
+    if listen_count <= p50
         return "Low"
-    else return "High"
+    else 
+        return "High"
     end
 end
 
-targets = [create_popularity_class(listen) for listen in listens]
-binary_targets = [binary_popularity_class(listen) for listen in listens]
-println("Popularity:")
-println("  Low: $(sum(targets .== "Low"))")
-println("  Medium: $(sum(targets .== "Medium"))")
-println("  High: $(sum(targets .== "High"))")
-println()
-println("Popularity on binary targets:")
-println("  Low: $(sum(targets .== "Low"))")
-println("  High: $(sum(targets .== "High"))")
-println()
+# 4. Generate Targets
+train_targets = [create_popularity_class(l) for l in train_listens]
+test_targets = [create_popularity_class(l) for l in test_listens]
 
-features_df = extract_features(df)
-reduced_features_df = extract_features(reduced_df)
-inputs = Matrix{Float64}(features_df)
-reduced_inputs = Matrix{Float64}(reduced_features_df)
+train_binary_targets = [binary_popularity_class(l) for l in train_listens]
+test_binary_targets = [binary_popularity_class(l) for l in test_listens]
 
-println("Input features shape: $(size(inputs))")
-println()
-
-# ============================================================================
-# TRAIN/TEST SPLIT (Hold-out)
-# ============================================================================
-
-println("Step 2: Performing train/test split...")
-const TEST_RATIO = 0.35
-(trainIndexes, testIndexes) = holdOut(size(inputs, 1), TEST_RATIO, rng)
-
+# 5. Split Inputs
 train_inputs = inputs[trainIndexes, :]
-train_targets = targets[trainIndexes]
 test_inputs = inputs[testIndexes, :]
-test_targets = targets[testIndexes]
-
-train_binary_targets = binary_targets[trainIndexes]
-test_binary_targets = binary_targets[testIndexes]
 
 reduced_train_inputs = reduced_inputs[trainIndexes, :]
 reduced_test_inputs = reduced_inputs[testIndexes, :]
@@ -94,48 +98,56 @@ println("Training set: $(size(train_inputs, 1)) samples")
 println("Test set: $(size(test_inputs, 1)) samples")
 println()
 
+# Verify Class Distribution
+println("Training Popularity Distribution:")
+println("  Low: $(sum(train_targets .== "Low"))")
+println("  Medium: $(sum(train_targets .== "Medium"))")
+println("  High: $(sum(train_targets .== "High"))")
+println()
+
+
 # ============================================================================
 # HELPER FUNCTION: Run experiments for an approach
 # ============================================================================
 
 # ANN Configurations (at least 8 different architectures, 1-2 hidden layers)
 ann_configs = [
-    Dict(:topology => [10], :learningRate => 0.001, :maxEpochs => 10000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
-    Dict(:topology => [20], :learningRate => 0.001, :maxEpochs => 10000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
-    Dict(:topology => [30], :learningRate => 0.001, :maxEpochs => 10000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
-    Dict(:topology => [50], :learningRate => 0.001, :maxEpochs => 10000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
-    Dict(:topology => [10, 5], :learningRate => 0.001, :maxEpochs => 10000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
-    Dict(:topology => [20, 10], :learningRate => 0.001, :maxEpochs => 10000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
-    Dict(:topology => [30, 15], :learningRate => 0.001, :maxEpochs => 10000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
-    Dict(:topology => [50, 25], :learningRate => 0.001, :maxEpochs => 10000, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 3),
+    Dict(:topology => [128], :learningRate => 0.005, :maxEpochs => 200, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 1),
+    Dict(:topology => [64],  :learningRate => 0.005, :maxEpochs => 200, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 1),
+    Dict(:topology => [128, 64], :learningRate => 0.001, :maxEpochs => 200, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 1),
+    Dict(:topology => [64, 32],  :learningRate => 0.001, :maxEpochs => 200, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 1),
+    Dict(:topology => [100, 50], :learningRate => 0.001, :maxEpochs => 300, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 1),
+    Dict(:topology => [32, 16],  :learningRate => 0.001, :maxEpochs => 300, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 1),
+    Dict(:topology => [30, 15], :learningRate => 0.001, :maxEpochs => 300, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 1),
+    Dict(:topology => [64, 16], :learningRate => 0.001, :maxEpochs => 300, :validationRatio => 0.2, :maxEpochsVal => 20, :numExecutions => 1),
 ]
 
 # SVM Configurations (at least 8 different configurations: kernels + C values)
 svm_configs = [
     Dict(:kernel => "linear", :cost => 0.1),
     Dict(:kernel => "linear", :cost => 1.0),
-    Dict(:kernel => "linear", :cost => 10.0), # Added
-    Dict(:kernel => "rbf", :cost => 0.1, :gamma => 0.01),
-    Dict(:kernel => "rbf", :cost => 1.0, :gamma => 0.01),
-    Dict(:kernel => "rbf", :cost => 10.0, :gamma => 0.1),
-    Dict(:kernel => "rbf", :cost => 100.0, :gamma => 0.01), # Added
+    Dict(:kernel => "linear", :cost => 10.0),
+    Dict(:kernel => "linear", :cost => 10.0),
+    Dict(:kernel => "linear", :cost => 50.0),
+    Dict(:kernel => "linear", :cost => 100.0),
     Dict(:kernel => "sigmoid", :cost => 1.0, :gamma => 0.01, :coef0 => 0.0),
+    Dict(:kernel => "sigmoid", :cost => 3.0, :gamma => 0.02, :coef0 => 0.1),
 ]
 
 # Decision Tree Configurations (at least 6 different depth values)
 dt_configs = [
-    Dict(:max_depth => 3, :min_samples_leaf => 5, :rng => rng),
-    Dict(:max_depth => 5, :min_samples_leaf => 5, :rng => rng),
-    Dict(:max_depth => 7, :min_samples_leaf => 5, :rng => rng),
-    Dict(:max_depth => 10, :min_samples_leaf => 5, :rng => rng),
-    Dict(:max_depth => 15, :min_samples_leaf => 5, :rng => rng),
-    Dict(:max_depth => 20, :min_samples_leaf => 5, :rng => rng),
+    Dict(:max_depth => 25, :min_samples_leaf => 20, :rng => rng),
+    Dict(:max_depth => 30, :min_samples_leaf => 20, :rng => rng),
+    Dict(:max_depth => 7, :min_samples_leaf => 20, :rng => rng),
+    Dict(:max_depth => 10, :min_samples_leaf => 50, :rng => rng),
+    Dict(:max_depth => 15, :min_samples_leaf => 50, :rng => rng),
+    Dict(:max_depth => 20, :min_samples_leaf => 50, :rng => rng),
 ]
 
 # kNN Configurations (at least 6 different k values)
 knn_configs = [
-    Dict(:n_neighbors => 1),
-    Dict(:n_neighbors => 3),
+    Dict(:n_neighbors => 50),
+    Dict(:n_neighbors => 25),
     Dict(:n_neighbors => 5),
     Dict(:n_neighbors => 7),
     Dict(:n_neighbors => 10),
@@ -144,7 +156,7 @@ knn_configs = [
 rf_configs = [
     Dict(:n_trees => 50, :max_depth => 5, :rng => rng),
     Dict(:n_trees => 100, :max_depth => 10, :rng => rng),
-    Dict(:n_trees => 200, :max_depth => 15, :rng => rng),
+    Dict(:n_trees => 150, :max_depth => 15, :rng => rng),
     Dict(:n_trees => 100, :max_depth => -1, :rng => rng),
 ]
 
@@ -152,25 +164,23 @@ adaboost_configs = [
     Dict(:n_estimators => 25, :learning_rate => 0.5, :rng => rng),
     Dict(:n_estimators => 50, :learning_rate => 1.0, :rng => rng),
     Dict(:n_estimators => 100, :learning_rate => 1.0, :rng => rng),
-    Dict(:n_estimators => 50, :learning_rate => 1.5, :rng => rng),
+    Dict(:n_estimators => 50, :learning_rate => 0.5, :rng => rng),
 ]
 
 catboost_configs = [
     Dict(:iterations => 50, :learning_rate => 0.1, :depth => 4),
     Dict(:iterations => 100, :learning_rate => 0.1, :depth => 6),
     Dict(:iterations => 200, :learning_rate => 0.05, :depth => 8),
-    Dict(:iterations => 50, :learning_rate => 0.1, :depth => 4),
-    Dict(:iterations => 100, :learning_rate => 0.1, :depth => 6),
 ]
 
 configs = Dict(
     :ANN => ann_configs,
-    :SVC => svm_configs,
-    :DecisionTreeClassifier => dt_configs,
-    :KNeighborsClassifier => knn_configs,
-    :RandomForestClassifier => rf_configs,
-    :AdaBoostClassifier => adaboost_configs
-    #:CatBoostClassifier => catboost_configs
+    :SVM => svm_configs,
+    :DT => dt_configs,
+    :KNN => knn_configs,
+    :RF => rf_configs,
+    :AdaBoost => adaboost_configs,
+    :CatBoost => catboost_configs
 )
 
 # ============================================================================
@@ -180,12 +190,13 @@ configs = Dict(
 results_df, best_configs = run_approach_experiments(
     "Binary with Feature Reduction",
     configs,
-    copy(reduced_train_inputs),
-    copy(train_binary_targets),
-    copy(reduced_test_inputs),
-    copy(test_binary_targets);
+    reduced_train_inputs,
+    train_binary_targets,
+    reduced_test_inputs,
+    test_binary_targets;
     k_folds=3,
     rng=rng,
+    normalize=:zero
 )
 println("\n" * "=" ^ 80)
 println("SUMMARY - Binary with Feature Reduction")
@@ -195,44 +206,49 @@ println("=" ^ 80)
 println("Best Configurations - Binary with Feature Reduction")
 println(best_configs)
 println("=" ^ 80)
-#plot_grouped_comparison(results_df; title_str="Best Model Performance (Full): Accuracy vs F1")
-#plot_tradeoff_scatter(results_df; title_str="Full Features: Trade-off Analysis")
-#save_results_to_csv(results_df, "results/full_dataset.csv")
+plot_grouped_comparison(results_df; title_str="Best Model Performance (Full): Accuracy vs F1")
+plot_tradeoff_scatter(results_df; title_str="Full Features: Trade-off Analysis")
+save_results_to_csv(results_df, "results/full_dataset.csv")
+
 
 results_df_pca, best_configs_pca = run_approach_experiments(
     "Binary with PCA",
     configs,
-    copy(train_inputs),
-    copy(train_targets),
-    copy(test_inputs),
-    copy(test_targets),
+    train_inputs,
+    train_binary_targets,
+    test_inputs,
+    test_binary_targets,
     k_folds=3,
     rng=rng,
-    preprocessing=Dict(:type => :PCA, :variance_ratio => 0.7)
+    preprocessing=Dict(:type => :PCA, :variance_ratio => 0.7),
+    normalize=:zero
 )
 
+
 println("\n" * "=" ^ 80)
-println("SUMMARY - PCA")
+println("SUMMARY - Binary with PCA")
 println("=" ^ 80)
 println(results_df_pca)
 println("=" ^ 80)
-println("Best Configurations - PCA")
+println("Best Configurations - Binary with PCA")
 println(best_configs_pca)
 println("=" ^ 80)
-#plot_grouped_comparison(results_df_pca; title_str="Best Model Performance (PCA): Accuracy vs F1")
-#plot_tradeoff_scatter(results_df_pca; title_str="PCA Approach: Trade-off Analysis")
-#save_results_to_csv(results_df_pca, "results/pca.csv")
+
+plot_grouped_comparison(results_df_pca; title_str="Best Model Performance (Bin PCA): Accuracy vs F1")
+plot_tradeoff_scatter(results_df_pca; title_str="PCA Approach: Trade-off Analysis")
+save_results_to_csv(results_df_pca, "results/pca.csv")
 
 results_df_lda, best_configs_lda = run_approach_experiments(
     "LDA",
     configs,
-    copy(train_inputs),
-    copy(train_targets),
-    copy(test_inputs),
-    copy(test_targets),
+    train_inputs,
+    train_targets,
+    test_inputs,
+    test_targets,
     k_folds=3,
     rng=rng,
-    preprocessing=Dict(:type => :LDA, :outdim => 2)
+    preprocessing=Dict(:type => :LDA, :outdim => 2),
+    normalize=:zero
 )
 
 println("\n" * "=" ^ 80)
@@ -243,19 +259,20 @@ println("=" ^ 80)
 println("Best Configurations - LDA")
 println(best_configs_lda)
 println("=" ^ 80)
-#plot_grouped_comparison(results_df_lda; title_str="Best Model Performance (LDA): Accuracy vs F1")
-#plot_tradeoff_scatter(results_df_lda; title_str="LDA Approach: Trade-off Analysis")
-#save_results_to_csv(results_df_lda, "results/lda.csv")
+plot_grouped_comparison(results_df_lda; title_str="Best Model Performance (LDA): Accuracy vs F1")
+plot_tradeoff_scatter(results_df_lda; title_str="LDA Approach: Trade-off Analysis")
+save_results_to_csv(results_df_lda, "results/lda.csv")
 
 results_df_reduced, best_configs_reduced = run_approach_experiments(
     "Feature Reduction",
     configs,
-    copy(reduced_train_inputs),
-    copy(train_targets),
-    copy(reduced_test_inputs),
-    copy(test_targets),
+    reduced_train_inputs,
+    train_targets,
+    reduced_test_inputs,
+    test_targets,
     k_folds=3,
     rng=rng,
+    normalize=:zero
 )
 
 println("\n" * "=" ^ 80)
@@ -266,9 +283,10 @@ println("=" ^ 80)
 println("Best Configurations - Feature Reduction")
 println(best_configs_reduced)
 println("=" ^ 80)
-#plot_grouped_comparison(results_df_lda; title_str="Best Model Performance (LDA): Accuracy vs F1")
-#plot_tradeoff_scatter(results_df_lda; title_str="LDA Approach: Trade-off Analysis")
-#save_results_to_csv(results_df_lda, "results/lda.csv")
+plot_grouped_comparison(results_df_reduced; title_str="Best Model Performance (3-Class Reduced): Accuracy vs F1")
+plot_tradeoff_scatter(results_df_reduced; title_str="Reduced 3-class Approach: Trade-off Analysis")
+save_results_to_csv(results_df_reduced, "results/reduced.csv")
+
 
 println("\n" * "=" ^ 80)
 println("Pipeline completed successfully!")

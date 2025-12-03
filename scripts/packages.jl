@@ -25,6 +25,7 @@ Pkg.add([
     "Statistics",
     "LinearAlgebra",
     "NearestNeighborModels",
+    "NearestNeighborModels",
     "MultivariateStats",
     "StatsPlots"
 ])

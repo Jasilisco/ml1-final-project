@@ -28,10 +28,6 @@ PCA = MLJ.@load PCA pkg=MultivariateStats verbosity=0
 
 # modelSVMClassifier = SVMClassifier(kernel=LIBSVM.Kernel.RadialBasis, cost=1.0, gamma=2.0, degree=Int32(3))
 
-modelDTClassifier = DTClassifier(max_depth=4, rng=Random.MersenneTwister(1))
-
-modelknnClassifier = kNNClassifier(K=3)
-
 
 function getSVCModel(modelHyperparameters::Dict)
 
@@ -97,12 +93,12 @@ end
 function getDecisionTreeModel(modelHyperparameters::Dict)
     max_depth = get(modelHyperparameters, :max_depth, 5)
     min_samples_leaf = get(modelHyperparameters, :min_samples_leaf, 1)
-    rng = get(modelHyperparameters, :rng, Random.MersenneTwister(1))
+    rng = get(modelHyperparameters, :rng, Random.MersenneTwister(1234))
     return DTClassifier(max_depth=max_depth, min_samples_leaf=min_samples_leaf, rng=rng)
 end
 function getDecisionTreeModelRegressor(modelHyperparameters::Dict)
     max_depth=get(modelHyperparameters, :max_depth, 5)
-    rng=get(modelHyperparameters, :rng, Random.MersenneTwister(1))
+    rng=get(modelHyperparameters, :rng, Random.MersenneTwister(1234))
     return DTRegressor(max_depth=max_depth, rng=rng)
 end
 
@@ -120,7 +116,7 @@ end
 function getRandomForestModel(modelHyperparameters::Dict)
     n_trees = get(modelHyperparameters, :n_trees, 100)
     max_depth = get(modelHyperparameters, :max_depth, -1)  # -1 means no limit
-    rng = get(modelHyperparameters, :rng, Random.MersenneTwister(1))
+    rng = get(modelHyperparameters, :rng, Random.MersenneTwister(1234))
     return RFClassifier(n_trees=n_trees, max_depth=max_depth, rng=rng)
 end
 

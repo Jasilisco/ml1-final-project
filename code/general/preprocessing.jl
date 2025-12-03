@@ -149,8 +149,6 @@ function getLDAModel(modelHyperparameters::Dict)
 end
 
 function apply_pca_mlj(data::AbstractArray{<:Real,2}; maxoutdim::Union{Int, Nothing}=nothing, variance_ratio::Union{Float64, Nothing}=nothing)
-    # Convert to MLJ table format
-    data_table = MLJ.table(data)
     
     # Create PCA model
     if variance_ratio !== nothing
@@ -162,26 +160,18 @@ function apply_pca_mlj(data::AbstractArray{<:Real,2}; maxoutdim::Union{Int, Noth
     end
     
     # Fit and transform
-    pca_mach = machine(pca_model, data_table) |> MLJ.fit!
-    transformed_table = MLJ.transform(pca_mach, data_table)
+    pca_mach = machine(pca_model, MLJ.table(data)) |> MLJ.fit!
+    transformed_table = MLJ.transform(pca_mach, MLJ.table(data))
     
-    # Convert back to matrix
-    transformed_data = MLJ.matrix(transformed_table)
-    
-    return transformed_data, pca_mach
+    return MLJ.matrix(transformed_table), pca_mach
 end
 
 function transform_pca_mlj(pca_mach, data::AbstractArray{<:Real,2})
-    data_table = MLJ.table(data)
-    transformed_table = MLJ.transform(pca_mach, data_table)
+    transformed_table = MLJ.transform(pca_mach, MLJ.table(data))
     return MLJ.matrix(transformed_table)
 end
 
-function apply_lda_mlj(data::AbstractArray{<:Real,2}, labels::Vector{String}; outdim::Union{Int, Nothing}=nothing)
-    # Convert to MLJ table format
-    data_table = MLJ.table(data)
-    labels_categorical = categorical(labels)
-    
+function apply_lda_mlj(data::AbstractArray{<:Real,2}, labels::Vector{String}; outdim::Union{Int, Nothing}=nothing)    
     # Create LDA model
     if outdim !== nothing
         lda_model = getLDAModel(Dict(:outdim => outdim))
@@ -189,27 +179,23 @@ function apply_lda_mlj(data::AbstractArray{<:Real,2}, labels::Vector{String}; ou
         lad_model = getLDAModel()
     end
     # Fit and transform
-    lda_mach = machine(lda_model, data_table, labels_categorical) |> MLJ.fit!
-    transformed_table = MLJ.transform(lda_mach, data_table)
+    lda_mach = machine(lda_model, MLJ.table(data), categorical(labels)) |> MLJ.fit!
+    transformed_table = MLJ.transform(lda_mach, MLJ.table(data))
     
-    # Convert back to matrix
-    transformed_data = MLJ.matrix(transformed_table)
-    
-    return transformed_data, lda_mach
+    # Convert back to matrix    
+    return MLJ.matrix(transformed_table), lda_mach
 end
 
 function transform_lda_mlj(lda_mach, data::AbstractArray{<:Real,2})
-    data_table = MLJ.table(data)
-    transformed_table = MLJ.transform(lda_mach, data_table)
+    transformed_table = MLJ.transform(lda_mach, MLJ.table(data))
     return MLJ.matrix(transformed_table)
 end
 
 
 function extract_features(df)
     # Extract feature columns (exclude track_id and listens)
-    feature_cols = [col for col in names(df) if col != "track_listens" && col != "track_id"]
+    feature_cols = [col for col in names(df) if string(col) != "track_listens" && string(col) != "track_id"]
     features_df = select(df, feature_cols)
-    print(feature_cols)
     # Check for and handle non-numeric columns
     # Convert DataFrame to matrix, handling any string columns
     numeric_cols = String[]
