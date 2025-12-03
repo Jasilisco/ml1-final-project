@@ -124,12 +124,12 @@ ann_configs = [
 
 # SVM Configurations (at least 8 different configurations: kernels + C values)
 svm_configs = [
-    Dict(:kernel => "linear", :cost => 0.1),
-    Dict(:kernel => "linear", :cost => 1.0),
-    Dict(:kernel => "linear", :cost => 10.0),
-    Dict(:kernel => "linear", :cost => 10.0),
-    Dict(:kernel => "linear", :cost => 50.0),
-    Dict(:kernel => "linear", :cost => 100.0),
+    #Dict(:kernel => "linear", :cost => 0.1),
+    #Dict(:kernel => "linear", :cost => 1.0),
+    #Dict(:kernel => "linear", :cost => 10.0),
+    #Dict(:kernel => "linear", :cost => 10.0),
+    #Dict(:kernel => "linear", :cost => 50.0),
+    #Dict(:kernel => "linear", :cost => 100.0),
     Dict(:kernel => "sigmoid", :cost => 1.0, :gamma => 0.01, :coef0 => 0.0),
     Dict(:kernel => "sigmoid", :cost => 3.0, :gamma => 0.02, :coef0 => 0.1),
 ]
@@ -174,7 +174,7 @@ catboost_configs = [
 ]
 
 configs = Dict(
-    :ANN => ann_configs,
+    #:ANN => ann_configs,
     :SVM => svm_configs,
     :DT => dt_configs,
     :KNN => knn_configs,
@@ -186,7 +186,7 @@ configs = Dict(
 # ============================================================================
 # APPROACH 1: Full Features Dataset
 # ============================================================================
-
+#=
 results_df, best_configs = run_approach_experiments(
     "Binary with Feature Reduction",
     configs,
@@ -262,7 +262,7 @@ println("=" ^ 80)
 plot_grouped_comparison(results_df_lda; title_str="Best Model Performance (LDA): Accuracy vs F1")
 plot_tradeoff_scatter(results_df_lda; title_str="LDA Approach: Trade-off Analysis")
 save_results_to_csv(results_df_lda, "results/lda.csv")
-
+=#
 results_df_reduced, best_configs_reduced = run_approach_experiments(
     "Feature Reduction",
     configs,
