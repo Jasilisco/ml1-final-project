@@ -55,7 +55,6 @@ test_listens = listens[testIndexes]
 p33 = quantile(train_listens, 0.33)
 p50 = quantile(train_listens, 0.5)
 p66 = quantile(train_listens, 0.66)
-p66 = quantile(train_listens, 0.9)
 
 println("Class Thresholds (calculated on Train only):")
 println("  Low/Med Boundary (p33): $p33")
@@ -191,12 +190,13 @@ configs = Dict(
 results_df, best_configs = run_approach_experiments(
     "Binary with Feature Reduction",
     configs,
-    copy(reduced_train_inputs),
-    copy(train_targets),
-    copy(reduced_test_inputs),
-    copy(test_targets);
+    reduced_train_inputs,
+    train_binary_targets,
+    reduced_test_inputs,
+    test_binary_targets;
     k_folds=3,
     rng=rng,
+    normalize=:zero
 )
 println("\n" * "=" ^ 80)
 println("SUMMARY - Binary with Feature Reduction")
@@ -214,13 +214,14 @@ save_results_to_csv(results_df, "results/full_dataset.csv")
 results_df_pca, best_configs_pca = run_approach_experiments(
     "Binary with PCA",
     configs,
-    copy(train_inputs),
-    copy(train_targets),
-    copy(test_inputs),
-    copy(test_targets),
+    train_inputs,
+    train_binary_targets,
+    test_inputs,
+    test_binary_targets,
     k_folds=3,
     rng=rng,
-    preprocessing=Dict(:type => :PCA, :variance_ratio => 0.7)
+    preprocessing=Dict(:type => :PCA, :variance_ratio => 0.7),
+    normalize=:zero
 )
 
 
@@ -240,13 +241,14 @@ save_results_to_csv(results_df_pca, "results/pca.csv")
 results_df_lda, best_configs_lda = run_approach_experiments(
     "LDA",
     configs,
-    copy(train_inputs),
-    copy(train_targets),
-    copy(test_inputs),
-    copy(test_targets),
+    train_inputs,
+    train_targets,
+    test_inputs,
+    test_targets,
     k_folds=3,
     rng=rng,
-    preprocessing=Dict(:type => :LDA, :outdim => 2)
+    preprocessing=Dict(:type => :LDA, :outdim => 2),
+    normalize=:zero
 )
 
 println("\n" * "=" ^ 80)
@@ -264,12 +266,13 @@ save_results_to_csv(results_df_lda, "results/lda.csv")
 results_df_reduced, best_configs_reduced = run_approach_experiments(
     "Feature Reduction",
     configs,
-    copy(reduced_train_inputs),
-    copy(train_targets),
-    copy(reduced_test_inputs),
-    copy(test_targets),
+    reduced_train_inputs,
+    train_targets,
+    reduced_test_inputs,
+    test_targets,
     k_folds=3,
     rng=rng,
+    normalize=:zero
 )
 
 println("\n" * "=" ^ 80)
