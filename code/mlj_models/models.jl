@@ -17,7 +17,8 @@ RFClassifier = @load RandomForestClassifier pkg=DecisionTree verbosity=0
 AdaBoostClassifier = @load AdaBoostStumpClassifier pkg=DecisionTree verbosity=0
 CatBoostClassifier = @load CatBoostClassifier pkg=CatBoost verbosity=0
 DTRegressor = MLJ.@load DecisionTreeRegressor pkg=DecisionTree verbosity=0
-PCA = MLJ.@load PCA pkg=MultivariateStats verbosity=0
+
+#PCA = MLJ.@load PCA pkg=MultivariateStats verbosity=0
 
 
 # modelSVMClassifier = SVMClassifier(kernel=LIBSVM.Kernel.RadialBasis, cost=1.0, gamma=2.0, degree=Int32(3))
