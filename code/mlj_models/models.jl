@@ -17,6 +17,7 @@ RFClassifier = @load RandomForestClassifier pkg=DecisionTree verbosity=0
 AdaBoostClassifier = @load AdaBoostStumpClassifier pkg=DecisionTree verbosity=0
 CatBoostClassifier = @load CatBoostClassifier pkg=CatBoost verbosity=0
 DTRegressor = MLJ.@load DecisionTreeRegressor pkg=DecisionTree verbosity=0
+LinearSVC = @load LinearSVC pkg=LIBSVM
 PCA = MLJ.@load PCA pkg=MultivariateStats verbosity=0
 
 
@@ -40,8 +41,7 @@ function getSVCModel(modelHyperparameters::Dict)
     cost=get(modelHyperparameters, :cost, 1.0)
 
     if kernelSelected == "linear"
-        kernel= LIBSVM.Kernel.Linear
-        return SVMClassifier(kernel=kernel, cost=Float64(cost))
+        return LinearSVC(cost = Float64(cost))
     elseif kernelSelected == "rbf"
         kernel= LIBSVM.Kernel.RadialBasis
         return SVMClassifier(kernel=kernel, cost=Float64(cost), gamma=Float64(gamma), degree=Int32(degree), coef0=Float64(coef0))
