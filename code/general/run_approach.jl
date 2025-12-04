@@ -22,7 +22,8 @@ function run_approach_experiments(
     k_folds::Int=5,
     rng::AbstractRNG=MersenneTwister(1234),
     normalize::Union{Symbol, Nothing}=:zero,
-    preprocessing::Union{Nothing, Dict}=nothing
+    preprocessing::Union{Nothing, Dict}=nothing,
+    test_n::Int=0
 )
     results_df = DataFrame(
         Approach = String[],
@@ -387,6 +388,131 @@ function run_approach_experiments(
     else
         println("  Not enough models for ensemble (need at least 2)")
     end
+
+    println("\n" * "="^80)
+    println("FINAL EVALUATION ON TEST SET (Best Models Only)")
+    println("="^80)
+
+    # DataFrame to store Test results
+    test_results_df = DataFrame(        
+        Approach = String[],
+        Model = Symbol[],
+        Config = String[],
+        Accuracy = Float32[],
+        ErrorRate = Float32[],
+        Sensitivity = Float32[],
+        Specificity = Float32[],
+        PPV = Float32[],
+        NPV = Float32[],
+        F1 = Float32[],
+        CM = Matrix{Float32}[]
+    )
+
+    # Map high-level model_type (keys in model_configs/best_configs) to MLJ model symbols
+    model_type_to_mlj_symbol = Dict(
+        :SVM      => :SVC,
+        :DT       => :DecisionTreeClassifier,
+        :KNN      => :KNeighborsClassifier,
+        :RF       => :RandomForestClassifier,
+        :AdaBoost => :AdaBoostClassifier,
+        :CatBoost => :CatBoostClassifier,
+    )
+
+    for (model_type, config) in best_configs
+        if config === nothing
+            continue
+        end
+
+        println("Evaluating best $model_type on Test Set...")
+
+        if model_type == :ANN
+            # ---------- ANN TESTING ----------
+            # Re-train ANN on (normalized/preprocessed) full training data
+            # Note: train_inputs_f32 already contains normalization + preprocessing
+            targetsANN = oneHotEncoding(train_targets)
+            ann, _ = trainClassANN(
+                config[:topology],
+                (train_inputs_f32, targetsANN);
+                maxEpochs      = get(config, :maxEpochs, config[:maxEpochs]),
+                learningRate   = get(config, :learningRate, config[:learningRate]),
+            )
+
+            # Predict on processed test data
+            # ann expects column-major (features x samples), you trained with inputs'
+            test_preds_raw = ann(Float32.(test_inputs_processed)')'  # (n_samples, n_classes)
+
+            # Convert network outputs (probabilities/scores) to predicted class index
+            # Assumes one-hot-like outputs with one column per class
+            pred_indices = map(i -> argmax(view(test_preds_raw, i, :)), 1:size(test_preds_raw, 1))
+
+            # Derive class labels from training targets ordering
+            # Use the same class set and ordering as in training
+            classes = unique(train_targets)
+            sort!(classes)
+
+            predicted_labels = [classes[ci] for ci in pred_indices]
+
+            # Compute metrics
+            metrics = confusionMatrix(predicted_labels, test_targets)
+            println("  -> Accuracy: $(metrics.accuracy)")
+            println("  -> F1:       $(metrics.f_score)")
+
+            push!(test_results_df, (
+                approach_name,
+                :ANN,
+                string(config),
+                metrics[1][1],
+                metrics[2][1],
+                metrics[3][1],
+                metrics[4][1],
+                metrics[5][1],
+                metrics[6][1],
+                metrics[7][1],
+                metrics[8]
+            ))
+
+        else
+            # ---------- MLJ MODELS TESTING ----------
+            # Build MLJ model with the best hyperparameters
+            @assert haskey(model_type_to_mlj_symbol, model_type) "Unknown model_type $model_type in test evaluation"
+            mlj_symbol = model_type_to_mlj_symbol[model_type]
+
+            # getModel is defined in models.jl / train_mlj.jl and used by modelCrossValidation
+            model = getModel(mlj_symbol, config)
+
+            mach = machine(model, MLJ.table(train_inputs_processed), categorical(train_targets))
+            MLJ.fit!(mach, verbosity = 0)
+            
+            predictions = MLJ.predict(mach, MLJ.table(test_inputs_processed))
+         
+             if model_type == :SVM || model_type == :SVC
+                 y_hat = predictions
+             else
+                 y_hat = mode.(predictions)
+             end
+
+            metrics = confusionMatrix(string.(y_hat), test_targets)
+            println("  -> Accuracy: $(metrics.accuracy)")
+            println("  -> F1:       $(metrics.f_score)")
+
+            push!(test_results_df, (
+                approach_name,
+                mlj_symbol,
+                string(config),
+                metrics[1][1],
+                metrics[2][1],
+                metrics[3][1],
+                metrics[4][1],
+                metrics[5][1],
+                metrics[6][1],
+                metrics[7][1],
+                metrics[8]
+            ))
+        end
+    end
+    
+    println(test_results_df)
+    save_results_to_csv(test_results_df, "results/test$test_n.csv")
     
     return (results_df, best_configs, preprocessing_model)
 end
